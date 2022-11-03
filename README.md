@@ -9,7 +9,7 @@ This console app is designed to demonstrate how to integrate with the IMO NLP Ap
 - Requests
 - Json
 ```
-pip -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Client Credentials
