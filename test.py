@@ -62,11 +62,10 @@ for i in json_data['entities']:
     for j in i['related_entities']:
         j['related_entity']= j.pop('entity')
 
-
 # Show Entities
 
 dataframe = pd.json_normalize(json_data['entities'])
-df = dataframe[['domain', 'entity', 'assertion.result', 'related_entities', 'codemaps.imo.lexical_code','codemaps.imo.confidence',  'codemaps.icd10cm']]
+df = dataframe[['domain', 'entity', 'begin_offset', 'assertion.result', 'codemaps.imo.lexical_code','codemaps.imo.confidence',  'codemaps.icd10cm']]
 print('=================================================')
 print('Entities extracted')
 print('=================================================')
@@ -76,5 +75,3 @@ print('Entity Relationships to body part and laterality')
 print('=================================================')
 df = pd.json_normalize(json_data['entities'], record_path=['related_entities'], meta=['domain', 'entity', ['assertion', 'result'], ['codemaps', 'imo', 'lexical_code'], ['codemaps', 'imo', 'confidence']])
 print(df)
-
-#print(x.json())
