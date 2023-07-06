@@ -2,6 +2,8 @@ import json
 import requests
 import pandas as pd
 
+from imo_nlp_parser import ImoNlpParser
+
 # Paste your sample  unstructured note here
 unstructured_note = """Pt is 87 yo woman, highschool instructor with past medical history that includes
    - status post cardiac catheterization in April 2019.
@@ -42,9 +44,11 @@ auth_response = requests.post(auth0_auth_url, data=data)
 
 # Read token from Auth0 response
 auth_response_json = auth_response.json()
+if auth_response.status_code != 200:
+    raise Exception(auth_response_json["error_description"] if "error_description" in auth_response_json else "Authentication Error!")
+
 auth_token = auth_response_json["access_token"]
 auth_token_header_value = "Bearer %s" % auth_token
-
 
 # Prepare API Request
 auth_token_header = {
@@ -56,22 +60,27 @@ request_body = {
 }
 
 # Send NLP Request
-response = requests.post(BASE_URL, data= json.dumps(request_body).encode('utf-8'), headers=auth_token_header  )
+response = requests.post(BASE_URL, data= json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
 json_data = json.loads(response.text)
-for i in json_data['entities']:
-    for j in i['related_entities']:
-        j['related_entity']= j.pop('entity')
+parser = ImoNlpParser(json_data)
+
+# Show Sentences
+df = pd.json_normalize(parser.getAllSentence())
+print('=================================================')
+print('Sentences extracted')
+print('=================================================')
+print(df)
 
 # Show Entities
-
-dataframe = pd.json_normalize(json_data['entities'])
-df = dataframe[['domain', 'entity', 'begin_offset', 'assertion.result', 'codemaps.imo.lexical_code','codemaps.imo.confidence',  'codemaps.icd10cm']]
+df = pd.json_normalize(parser.getAllEntity())
 print('=================================================')
 print('Entities extracted')
 print('=================================================')
 print(df)
+
+# Show Relations
+df = pd.json_normalize(parser.getAllRelation())
 print('=================================================')
-print('Entity Relationships to body part and laterality')
+print('Relations extracted')
 print('=================================================')
-df = pd.json_normalize(json_data['entities'], record_path=['related_entities'], meta=['domain', 'entity', ['assertion', 'result'], ['codemaps', 'imo', 'lexical_code'], ['codemaps', 'imo', 'confidence']])
 print(df)
