@@ -30,8 +30,8 @@ client_id = imo_keys['CLIENT_ID']
 client_secret = imo_keys['SECRET']
 
 
-BASE_URL = 'https://api.imohealth.com/nlp/annotate'
-audience = "https://api.imohealth.com"
+BASE_URL = 'https://api-dev.imohealth.com/nlp/annotate'
+audience = "https://api-dev.imohealth.com"
 grant_type = "client_credentials"
 data = {
     "grant_type": grant_type,
@@ -39,7 +39,7 @@ data = {
     "client_secret": client_secret,
     "audience": audience
 }
-auth0_auth_url = "https://auth.imohealth.com/oauth/token"
+auth0_auth_url = "https://auth-dev.imohealth.com/oauth/token"
 auth_response = requests.post(auth0_auth_url, data=data)
 
 # Read token from Auth0 response
@@ -63,6 +63,7 @@ request_body = {
 response = requests.post(BASE_URL, data= json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
 json_data = json.loads(response.text)
 parser = ImoNlpParser(json_data)
+pd.options.display.max_colwidth = 100
 
 # Show Sentences
 df = pd.json_normalize(parser.getAllSentence())
@@ -73,6 +74,10 @@ print(df)
 
 # Show Entities
 df = pd.json_normalize(parser.getAllEntity())
+df = df[["semantic", "text", "attrs.assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
+df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
+df = df[df["imo_lexical"].notna()]
+df = df.explode("icd10cm")
 print('=================================================')
 print('Entities extracted')
 print('=================================================')
@@ -80,6 +85,7 @@ print(df)
 
 # Show Relations
 df = pd.json_normalize(parser.getAllRelation())
+df = df[["semantic", "fromEnt.text", "toEnt.text"]]
 print('=================================================')
 print('Relations extracted')
 print('=================================================')

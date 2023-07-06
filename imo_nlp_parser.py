@@ -14,9 +14,13 @@ class ImoNlpParser:
 
     def __init__(self, data={}):
         self.data = data
+        self.content = ''
         self.sentence = []
         self.entities = []
         self.relations = []
+
+        if 'content' in self.data:
+            self.content = self.data['content']
 
         if 'indexes' in self.data:
             self.parse()
@@ -40,6 +44,8 @@ class ImoNlpParser:
                         idx += 1
                         self.sentence[idx]['entities'] = []
 
+                    en['text'] = self.content[en['begin']:en['end']]
+
                     self.sentence[idx]['entities'].append(en)
                     self.entities.append(en)
                     idxdict[self.key(en)] = [len(self.entities) - 1, idx]
@@ -60,6 +66,10 @@ class ImoNlpParser:
                             self.entities[idxdict[key][0]]['relations'].append(rel)
                         else:
                             self.entities[idxdict[key][0]]['relations'] = [rel]
+
+        for rel in self.relations:
+            rel['fromEnt']['text'] = self.content[rel['fromEnt']['begin']:rel['fromEnt']['end']]
+            rel['toEnt']['text'] = self.content[rel['toEnt']['begin']:rel['toEnt']['end']]
 
     def key(self, en: dict):
         return str(en['begin']) + '_' + str(en['end']) + '_' + str(en['semantic'])
