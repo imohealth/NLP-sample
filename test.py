@@ -30,8 +30,8 @@ client_id = imo_keys['CLIENT_ID']
 client_secret = imo_keys['SECRET']
 
 
-BASE_URL = 'https://api-dev.imohealth.com/nlp/annotate'
-audience = "https://api-dev.imohealth.com"
+BASE_URL = 'https://api.imohealth.com/nlp/annotate'
+audience = "https://api.imohealth.com"
 grant_type = "client_credentials"
 data = {
     "grant_type": grant_type,
@@ -39,7 +39,7 @@ data = {
     "client_secret": client_secret,
     "audience": audience
 }
-auth0_auth_url = "https://auth-dev.imohealth.com/oauth/token"
+auth0_auth_url = "https://auth.imohealth.com/oauth/token"
 auth_response = requests.post(auth0_auth_url, data=data)
 
 # Read token from Auth0 response
