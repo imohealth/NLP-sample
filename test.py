@@ -63,6 +63,7 @@ request_body = {
 response = requests.post(BASE_URL, data= json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
 json_data = json.loads(response.text)
 parser = ImoNlpParser(json_data)
+pd.options.display.max_colwidth = 100
 
 # Show Sentences
 df = pd.json_normalize(parser.getAllSentence())
@@ -73,6 +74,10 @@ print(df)
 
 # Show Entities
 df = pd.json_normalize(parser.getAllEntity())
+df = df[["semantic", "text", "attrs.assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
+df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
+df = df[df["imo_lexical"].notna()]
+df = df.explode("icd10cm")
 print('=================================================')
 print('Entities extracted')
 print('=================================================')
@@ -80,6 +85,7 @@ print(df)
 
 # Show Relations
 df = pd.json_normalize(parser.getAllRelation())
+df = df[["semantic", "fromEnt.text", "toEnt.text"]]
 print('=================================================')
 print('Relations extracted')
 print('=================================================')
