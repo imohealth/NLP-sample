@@ -1,13 +1,6 @@
 from typing import List
 from dataclasses import dataclass, field
 
-SEMANTIC_TYPE_TO_DOMAIN = {
-    'problem': 'Problem',
-    'treatment': 'Procedure',
-    'drug': 'Medication',
-    'test': 'Lab'
-}
-
 @dataclass(frozen=True)
 class Token:
     id: str
@@ -27,10 +20,6 @@ class Entity(Token):
     section: str
     assertion: str
     linked_entities: List[LinkedEntity]
-    
-    @property
-    def domain(self) -> str:
-        return SEMANTIC_TYPE_TO_DOMAIN[self.semantic.lower()] if self.semantic.lower() in SEMANTIC_TYPE_TO_DOMAIN else ''
 
 @dataclass(frozen=True)
 class Relation(Token):
