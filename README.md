@@ -1,5 +1,5 @@
 ## NLP Partner Integration Application
-This console app is designed to demonstrate how to integrate with the IMO NLP Api.
+This console app is designed to demonstrate how to integrate with the IMO Precision Normalize NLP API.
 
 ## Dependencies
 - Python3.8
@@ -8,7 +8,8 @@ This console app is designed to demonstrate how to integrate with the IMO NLP Ap
 - Pandas
 - Requests
 - Json
-```
+  
+```sh
 pip install -r requirements.txt
 ```
 
@@ -16,84 +17,74 @@ pip install -r requirements.txt
 Contact IMO Client Support to get test credentials (CLIENT_ID and SECRET). Paste those values in the 'config.json'
  
 ## Execution
-- Paste you example unstructured note on Line 6 of ./test.py as follows:
-  
-```
-# Paste your sample  unstructured note here
-unstructured_note = """Pt is 87 yo woman, highschool teacher with past medical history that includes
- - status post cardiac catheterization in April 2019.
-She presents today with palpitations and chest pressure.
-HPI : Sleeping trouble on present dosage of Clonidine. Severe Rash  on face and leg, slightly itchy  
-Meds : Vyvanse 50 mgs po at breakfast daily, 
- Clonidine 0.2 mgs -- 1 and 1 / 2 tabs po qhs 
-HEENT : Boggy inferior turbinates, No oropharyngeal lesion 
-Lungs : clear 
-Heart : Regular rhythm 
-Skin :  Mild erythematous eruption to hairline 
+1. Paste your example unstructured note on Line 8 of [test.py](./test.py) as follows:
+    ```python
+    # Paste your sample unstructured note here
+    unstructured_note = """Pt is 87 yo woman, highschool teacher with past medical history that includes
+    - status post cardiac catheterization in April 2019.
+    She presents today with palpitations and chest pressure.
+    HPI : Sleeping trouble on present dosage of Clonidine. Severe Rash  on face and leg, slightly itchy  
+    Meds : Vyvanse 50 mgs po at breakfast daily, 
+    Clonidine 0.2 mgs -- 1 and 1 / 2 tabs po qhs 
+    HEENT : Boggy inferior turbinates, No oropharyngeal lesion 
+    Lungs : clear 
+    Heart : Regular rhythm 
+    Skin :  Mild erythematous eruption to hairline 
 
-Follow-up as scheduled"""
-```
+    Follow-up as scheduled"""
+    ```
+2. Set the pipeline name you want to us on Line 23 of [test.py](./test.py). You can execute a GET request to https://api.imohealth.com/entityextraction/pipelines using your API credentials to view all available pipelines, or see the [documentation](https://developer.imohealth.com/api-catalog/entity-extraction/pipelines). 
+   ```python
+   pipeline = 'imo-clinical-comprehensive'
+   ```
+3. Run the following command to execute
 
-- Run the following command to execute
-
-```
+```sh
 python .\test.py
 ```
 
 ## Steps to integrate
-The following steps are implemented in the example test.py included in the package
+The following steps are implemented in the example [test.py](./test.py) included in the package
 
-- Obtain Access Token
-- Read Token from Auth0 Response
-- Extract token from the Auth0 response
-- Prepare API Request
+1. Obtain Access Token
+2. Read Token from Auth0 Response
+3. Send NLP API Request
+4. Display Entities in tabular form (sample below)
 
+    |     | semantic | text                                   | assertion | imo_lexical | icd10cm                                                                                             |
+    | --- | -------- | -------------------------------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------- |
+    | 0   | test     | cardiac catheterization                | present   | 30984733    | NaN                                                                                                 |
+    | 1   | problem  | palpitations                           | present   | 27471       | {'code': 'R00.2', 'title': 'Palpitations', 'map_type': 'Preferred primary', 'code_metadata': {'c... |
+    | 2   | problem  | chest pressure                         | present   | 69698801    | {'code': 'R07.89', 'title': 'Other chest pain', 'map_type': 'Preferred primary', 'code_metadata'... |
+    | 3   | problem  | Sleeping trouble                       | present   | 370583      | {'code': 'G47.9', 'title': 'Sleep disorder, unspecified', 'map_type': 'Preferred primary', 'code... |
+    | 4   | drug     | Clonidine                              | present   | 112476      | NaN                                                                                                 |
+    | 5   | problem  | Severe Rash                            | present   | 1493345662  | {'code': 'R21', 'title': 'Rash and other nonspecific skin eruption', 'map_type': 'Preferred prim... |
+    | 6   | problem  | itchy                                  | present   | 52810       | {'code': 'L29.9', 'title': 'Pruritus, unspecified', 'map_type': 'Preferred primary', 'code_metad... |
+    | 7   | drug     | Vyvanse                                | present   | 250630      | NaN                                                                                                 |
+    | 8   | drug     | Clonidine                              | present   | 112476      | NaN                                                                                                 |
+    | 9   | problem  | Boggy inferior turbinates              | present   | 29245502    | {'code': 'C30.0', 'title': 'Malignant neoplasm of nasal cavity', 'map_type': 'Preferred primary'... |
+    | 10  | problem  | oropharyngeal lesion                   | absent    | 1053446     | {'code': 'J39.2', 'title': 'Other diseases of pharynx', 'map_type': 'Preferred primary', 'code_m... |
+    | 11  | problem  | Mild erythematous eruption to hairline | present   | 1526701     | {'code': 'L53.9', 'title': 'Erythematous condition, unspecified', 'map_type': 'Preferred primary... |
 
-```
-{
-  "text": "A 61 year old patient has chronic pain in left leg"
-}
-```
-- Send NLP Request
-
-- Display Entities in tabular form
-
-Sample tabular response:
-
-| index | semantic | text                                   | attrs.assertion | imo_lexical | icd10cm                                                                                             |
-| ----- | -------- | -------------------------------------- | --------------- | ----------- | --------------------------------------------------------------------------------------------------- |
-| 0     | problem  | highschool instructor                  | present         | 1526491289  | {'code': 'Y07.53', 'title': 'Teacher or instructor, perpetrator of maltreatment and neglect', 'm... |
-| 1     | test     | cardiac catheterization                | present         | 689102      | NaN                                                                                                 |
-| 4     | problem  | palpitations                           | present         | 27471       | {'code': 'R00.2', 'title': 'Palpitations', 'map_type': 'Preferred primary', 'code_metadata': {'c... |
-| 5     | problem  | chest pressure                         | present         | 69698801    | {'code': 'R07.89', 'title': 'Other chest pain', 'map_type': 'Preferred primary', 'code_metadata'... |
-| 7     | drug     | Clonidine                              | present         | 112476      | NaN                                                                                                 |
-| 9     | problem  | Severe Rash  on face and leg           | present         | 41503942    | {'code': 'Z78.9', 'title': 'Other specified health status', 'map_type': 'Preferred primary', 'co... |
-| 10    | problem  | slightly itchy                         | present         | 87386457    | {'code': 'Z74.09', 'title': 'Other reduced mobility', 'map_type': 'Preferred primary', 'code_met... |
-| 12    | drug     | Vyvanse                                | present         | 1495475388  | NaN                                                                                                 |
-| 16    | drug     | Clonidine                              | present         | 1495698898  | NaN                                                                                                 |
-| 22    | problem  | Boggy inferior turbinates              | present         | 29245502    | {'code': 'C30.0', 'title': 'Malignant neoplasm of nasal cavity', 'map_type': 'Preferred primary'... |
-| 25    | problem  | oropharyngeal lesion                   | absent          | 1053446     | {'code': 'J39.2', 'title': 'Other diseases of pharynx', 'map_type': 'Preferred primary', 'code_m... |
-| 27    | problem  | Mild erythematous eruption to hairline | present         | 1526701     | {'code': 'L53.9', 'title': 'Erythematous condition, unspecified', 'map_type': 'Preferred primary... |
-
-- Display Relationships in tabular form
-
-Sample tabular response:
-|     | semantic         | fromEnt.text                 | toEnt.text         |
-| --- | ---------------- | ---------------------------- | ------------------ |
-| 0   | test-temporal    | cardiac catheterization      | April 2019         |
-| 1   | problem-temporal | chest pressure               | today              |
-| 2   | problem-temporal | palpitations                 | today              |
-| 3   | problem-bodyloc  | chest pressure               | chest              |
-| 4   | problem-severity | Severe Rash  on face and leg | Severe             |
-| 5   | problem-severity | slightly itchy               | slightly           |
-| 6   | drug-frequency   | Vyvanse                      | at breakfast daily |
-| 7   | drug-route       | Vyvanse                      | po                 |
-| 8   | drug-strength    | Vyvanse                      | 50 mgs             |
-| 9   | drug-form        | Clonidine                    | tabs               |
-| 10  | drug-route       | Clonidine                    | po                 |
-| 11  | drug-dosage      | Clonidine                    | 1 and 1 / 2        |
-| 12  | drug-frequency   | Clonidine                    | qhs                |
-| 13  | drug-strength    | Clonidine                    | 0.2 mgs            |
-| 14  | problem-bodyloc  | Boggy inferior turbinates    | turbinates         |
-| 15  | problem-negation | oropharyngeal lesion         | No                 |
-| 16  | problem-bodyloc  | oropharyngeal lesion         | oropharyngeal      |
+5. Display Relationships in tabular form (sample below)
+    | id  | semantic         | from_ent_text             | to_ent_text        |
+    | --- | ---------------- | ------------------------- | ------------------ |
+    | 0   | test-temporal    | cardiac catheterization   | April 2019         |
+    | 1   | problem-temporal | chest pressure            | today              |
+    | 2   | problem-temporal | palpitations              | today              |
+    | 3   | problem-bodyloc  | chest pressure            | chest              |
+    | 4   | problem-bodyloc  | Severe Rash               | leg                |
+    | 5   | problem-bodyloc  | Severe Rash               | face               |
+    | 6   | problem-severity | Severe Rash               | Severe             |
+    | 7   | problem-severity | itchy                     | slightly           |
+    | 8   | drug-frequency   | Vyvanse                   | at breakfast daily |
+    | 9   | drug-route       | Vyvanse                   | po                 |
+    | 10  | drug-strength    | Vyvanse                   | 50 mgs             |
+    | 11  | drug-form        | Clonidine                 | tabs               |
+    | 12  | drug-route       | Clonidine                 | po                 |
+    | 13  | drug-dosage      | Clonidine                 | 1 and 1 / 2        |
+    | 14  | drug-frequency   | Clonidine                 | qhs                |
+    | 15  | drug-strength    | Clonidine                 | 0.2 mgs            |
+    | 16  | problem-bodyloc  | Boggy inferior turbinates | turbinates         |
+    | 17  | problem-negation | oropharyngeal lesion      | No                 |
+    | 18  | problem-bodyloc  | oropharyngeal lesion      | oropharyngeal      |
