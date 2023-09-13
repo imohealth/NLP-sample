@@ -2,9 +2,9 @@ import json
 import requests
 import pandas as pd
 
-from imo_nlp_parser import ImoNlpParser
+from models import NLPResult
 
-# Paste your sample  unstructured note here
+# Paste your sample unstructured note here
 unstructured_note = """Pt is 87 yo woman, highschool instructor with past medical history that includes
    - status post cardiac catheterization in April 2019.
 She presents today with palpitations and chest pressure.
@@ -18,10 +18,13 @@ Skin :  Mild erythematous eruption to hairline
 
 Follow-up as scheduled"""
 
-# Obtain Access Token
+# Select a pipeline to use for entity extraction
+# See GET https://api.imohealth.com/entityextraction/pipelines for all available pipelines
+pipeline = 'imo-clinical-comprehensive'
 
 print("- App started.")
 
+# 1. Obtain Access Token
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
     imo_keys = config['imo_keys']
@@ -29,8 +32,7 @@ with open('config.json', 'r') as config_file:
 client_id = imo_keys['CLIENT_ID']
 client_secret = imo_keys['SECRET']
 
-
-BASE_URL = 'https://api.imohealth.com/nlp/annotate'
+BASE_URL = f'https://api.imohealth.com/entityextraction/pipelines/{pipeline}'
 audience = "https://api.imohealth.com"
 grant_type = "client_credentials"
 data = {
@@ -42,7 +44,7 @@ data = {
 auth0_auth_url = "https://auth.imohealth.com/oauth/token"
 auth_response = requests.post(auth0_auth_url, data=data)
 
-# Read token from Auth0 response
+# 2. Read token from Auth0 response
 auth_response_json = auth_response.json()
 if auth_response.status_code != 200:
     raise Exception(auth_response_json["error_description"] if "error_description" in auth_response_json else "Authentication Error!")
@@ -50,43 +52,49 @@ if auth_response.status_code != 200:
 auth_token = auth_response_json["access_token"]
 auth_token_header_value = "Bearer %s" % auth_token
 
-# Prepare API Request
+# 3. Send NLP API Request
 auth_token_header = {
     'Authorization': auth_token_header_value,
-    'Content-Type': 'text/plain; charset=utf-8'}
-
-request_body = {
-    "text": unstructured_note
+    'Content-Type': 'application/json'
 }
 
-# Send NLP Request
-response = requests.post(BASE_URL, data= json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
-json_data = json.loads(response.text)
-parser = ImoNlpParser(json_data)
+request_body ={
+    "text": unstructured_note,
+    "preferences": {
+        "thresholds": {
+            "global": 0.0
+        },
+        "type_filter": ["entities", "relations"]
+    }
+}
+
+response = requests.post(BASE_URL, data=  json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
+response.raise_for_status()
+result = NLPResult(**json.loads(response.text))
+
 pd.options.display.max_colwidth = 100
 
-# Show Sentences
-df = pd.json_normalize(parser.getAllSentence())
-print('=================================================')
-print('Sentences extracted')
-print('=================================================')
-print(df)
+#4. Display Entities in tabular form
+if len(result.entities) > 0:
+    df = pd.json_normalize(result.entities)
+    df = df[["semantic", "text", "assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
+    df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
+    df = df[df["imo_lexical"].notna()]
+    df = df.explode("icd10cm")
+    print('=================================================')
+    print('Entities extracted')
+    print('=================================================')
+    print(df)
+else:
+    print("No Entities Found")
 
-# Show Entities
-df = pd.json_normalize(parser.getAllEntity())
-df = df[["semantic", "text", "attrs.assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
-df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
-df = df[df["imo_lexical"].notna()]
-df = df.explode("icd10cm")
-print('=================================================')
-print('Entities extracted')
-print('=================================================')
-print(df)
-
-# Show Relations
-df = pd.json_normalize(parser.getAllRelation())
-df = df[["semantic", "fromEnt.text", "toEnt.text"]]
-print('=================================================')
-print('Relations extracted')
-print('=================================================')
-print(df)
+#5. Display Relationships in tabular form
+if len(result.relations) > 0:
+    df = pd.json_normalize(result.relations)
+    df = df[["semantic", "from_ent_text", "to_ent_text"]]
+    print('=================================================')
+    print('Relations extracted')
+    print('=================================================')
+    print(df)
+else:
+    print("No Relations Found")
