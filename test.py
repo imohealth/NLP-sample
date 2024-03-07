@@ -4,6 +4,16 @@ import pandas as pd
 
 from models import NLPResult
 
+import argparse
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='NLP Sample Script')
+parser.add_argument('--output', choices=['table', 'json', 'fhir'], default='table', help='Output format')
+args = parser.parse_args()
+
+# Set output format
+output_format = args.output
+
 # Paste your sample unstructured note here
 unstructured_note = """Pt is 87 yo woman, highschool instructor with past medical history that includes
    - status post cardiac catheterization in April 2019.
@@ -53,9 +63,10 @@ auth_token = auth_response_json["access_token"]
 auth_token_header_value = "Bearer %s" % auth_token
 
 # 3. Send NLP API Request
-auth_token_header = {
+headers = {
     'Authorization': auth_token_header_value,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json' if output_format != 'fhir' else 'application/fhir+json'
 }
 
 request_body ={
@@ -68,33 +79,42 @@ request_body ={
     }
 }
 
-response = requests.post(BASE_URL, data=  json.dumps(request_body).encode('utf-8'), headers=auth_token_header)
+response = requests.post(BASE_URL, data=  json.dumps(request_body).encode('utf-8'), headers=headers)
 response.raise_for_status()
-result = NLPResult(**json.loads(response.text))
 
-pd.options.display.max_colwidth = 100
+# 4. Parse and print NLP API Response
+if output_format == 'json' or output_format == 'fhir':
+    print('=================================================')
+    print(f'NLP API {output_format} Response')
+    print('=================================================')
+    # Print the JSON text with pretty formatting
+    print(json.dumps(json.loads(response.text), indent=4))
+else: 
+    result = NLPResult(**json.loads(response.text))
 
-#4. Display Entities in tabular form
-if len(result.entities) > 0:
-    df = pd.json_normalize(result.entities)
-    df = df[["semantic", "text", "assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
-    df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
-    df = df[df["imo_lexical"].notna()]
-    df = df.explode("icd10cm")
-    print('=================================================')
-    print('Entities extracted')
-    print('=================================================')
-    print(df)
-else:
-    print("No Entities Found")
+    pd.options.display.max_colwidth = 100
 
-#5. Display Relationships in tabular form
-if len(result.relations) > 0:
-    df = pd.json_normalize(result.relations)
-    df = df[["semantic", "from_ent_text", "to_ent_text"]]
-    print('=================================================')
-    print('Relations extracted')
-    print('=================================================')
-    print(df)
-else:
-    print("No Relations Found")
+    #4. Display Entities in tabular form
+    if len(result.entities) > 0:
+        df = pd.json_normalize(result.entities)
+        df = df[["semantic", "text", "assertion", "codemaps.imo.default_lexical_code", "codemaps.icd10cm.codes"]]
+        df = df.rename(columns={'codemaps.icd10cm.codes': 'icd10cm', 'codemaps.imo.default_lexical_code': 'imo_lexical'})
+        df = df[df["imo_lexical"].notna()]
+        df = df.explode("icd10cm")
+        print('=================================================')
+        print('Entities extracted')
+        print('=================================================')
+        print(df)
+    else:
+        print("No Entities Found")
+
+    #5. Display Relationships in tabular form
+    if len(result.relations) > 0:
+        df = pd.json_normalize(result.relations)
+        df = df[["semantic", "from_ent_text", "to_ent_text"]]
+        print('=================================================')
+        print('Relations extracted')
+        print('=================================================')
+        print(df)
+    else:
+        print("No Relations Found")
