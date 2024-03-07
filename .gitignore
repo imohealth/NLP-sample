@@ -1,0 +1,7 @@
+# ide
+.vscode\
+
+# python
+.venv\
+.pytest_cache\
+__pycache__\

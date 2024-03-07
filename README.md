@@ -4,19 +4,15 @@ This console app is designed to demonstrate how to integrate with the IMO Precis
 ## Dependencies
 - Python3.8
 
-## Install the following python package
-- Pandas
-- Requests
-- Json
-  
-```sh
-pip install -r requirements.txt
-```
-
 ## Client Credentials
 Contact IMO Client Support to get test credentials (CLIENT_ID and SECRET). Paste those values in the 'config.json'
  
 ## Execution
+1. Install the following python package dependencies
+    ```sh
+    pip install -r requirements.txt
+    ```
+
 1. Paste your example unstructured note on Line 8 of [test.py](./test.py) as follows:
     ```python
     # Paste your sample unstructured note here
@@ -37,11 +33,11 @@ Contact IMO Client Support to get test credentials (CLIENT_ID and SECRET). Paste
    ```python
    pipeline = 'imo-clinical-comprehensive'
    ```
-3. Run the following command to execute
+3. Run the following command to execute, optionally providing an output format [`json`, `fhir` or `table` (default)]
 
-```sh
-python .\test.py
-```
+    ```sh
+    python .\test.py --output=table
+    ```
 
 ## Steps to integrate
 The following steps are implemented in the example [test.py](./test.py) included in the package
@@ -49,7 +45,8 @@ The following steps are implemented in the example [test.py](./test.py) included
 1. Obtain Access Token
 2. Read Token from Auth0 Response
 3. Send NLP API Request
-4. Display Entities in tabular form (sample below)
+4. For `json` or `fhir` output formats, json is printed to the console.
+5. For `table` output format, Entities and Relationships are printed in tabular form (sample below)
 
     |     | semantic | text                                   | assertion | imo_lexical | icd10cm                                                                                             |
     | --- | -------- | -------------------------------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------- |
@@ -66,7 +63,6 @@ The following steps are implemented in the example [test.py](./test.py) included
     | 10  | problem  | oropharyngeal lesion                   | absent    | 1053446     | {'code': 'J39.2', 'title': 'Other diseases of pharynx', 'map_type': 'Preferred primary', 'code_m... |
     | 11  | problem  | Mild erythematous eruption to hairline | present   | 1526701     | {'code': 'L53.9', 'title': 'Erythematous condition, unspecified', 'map_type': 'Preferred primary... |
 
-5. Display Relationships in tabular form (sample below)
     | id  | semantic         | from_ent_text             | to_ent_text        |
     | --- | ---------------- | ------------------------- | ------------------ |
     | 0   | test-temporal    | cardiac catheterization   | April 2019         |
