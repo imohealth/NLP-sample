@@ -5,7 +5,7 @@ This console app is designed to demonstrate how to integrate with the IMO Precis
 - Python3.8
 
 ## Client Credentials
-Contact IMO Client Support to get test credentials (CLIENT_ID and SECRET). Paste those values in the 'config.json'
+Contact IMO Health Client Support to get test credentials (CLIENT_ID and SECRET). Paste those values in the 'config.json'
  
 ## Execution
 1. Install the following python package dependencies
