@@ -51,8 +51,8 @@ data = {
     "client_secret": client_secret,
     "audience": audience
 }
-auth0_auth_url = "https://auth.imohealth.com/oauth/token"
-auth_response = requests.post(auth0_auth_url, data=data)
+auth_url = "https://api.imohealth.com/oauth/token"
+auth_response = requests.post(auth_url, data=data)
 
 # 2. Read token from Auth0 response
 auth_response_json = auth_response.json()
